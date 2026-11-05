@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>김동덕 | 입원 차트</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172b3d;
+      --muted: #486074;
+      --line: #dbe5ed;
+      --navy: #142f48;
+      --teal: #006963;
+      --wash: #edf3f8;
+      --paper: #fff;
+      --amber: #744911;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--wash);
+      color: var(--ink);
+      font: 15px/1.6 "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    }
+    h2, h3, p, dl, ol { margin: 0; }
+    .top { background: var(--navy); color: white; }
+    .top-inner, .shell { max-width: 1180px; margin: auto; padding-inline: 24px; }
+    .top-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 54px; }
+    .product { font-size: 15px; font-weight: 800; letter-spacing: .05em; }
+    .context { color: #d7e5f1; font-size: 13px; }
+    .shell { padding-block: 22px 32px; }
+    .patient, .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+    .patient {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px;
+      padding: 14px 18px; margin-bottom: 16px;
+    }
+    .patient-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; }
+    .patient-label { color: var(--muted); font-size: 13px; }
+    .badge {
+      display: inline-block; border-radius: 5px; padding: 1px 8px;
+      background: #e4f3f0; color: var(--teal); font-size: 12px; font-weight: 800;
+    }
+    .patient-data { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+    .patient-data div { display: flex; align-items: baseline; gap: 7px; }
+    dt { color: var(--muted); font-size: 13px; font-weight: 700; }
+    dd { margin: 0; }
+    .patient-data dd { font-weight: 700; }
+    .layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .side-title { padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 15px; }
+    .history { padding: 0 16px; }
+    .history > div { padding: 12px 0; }
+    .history > div + div { border-top: 1px solid var(--line); }
+    .history dd { margin-top: 3px; font-size: 14px; }
+    .note-header { padding: 17px 20px; border-bottom: 1px solid var(--line); }
+    .section { padding: 15px 20px 17px; }
+    .section + .section { border-top: 1px solid var(--line); }
+    .section h2 { margin-bottom: 9px; font-size: 16px; }
+    .timeline { list-style: none; padding: 0; }
+    .timeline li { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 12px; padding: 7px 0; }
+    .timeline li + li { border-top: 1px solid var(--line); }
+    .timeline-label { color: var(--teal); font-weight: 800; font-size: 13px; }
+    .flag { margin-top: 10px; padding: 8px 11px; border-radius: 5px; background: #fff5de; color: var(--amber); font-size: 13px; }
+    .missing { margin-top: 9px; color: #61666d; font-size: 12px; }
+    .results { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .results h3 {
+      padding: 6px 9px; border-radius: 5px 5px 0 0;
+      background: #eaf1f7; color: #23445e; font-size: 13px;
+    }
+    .results dl > div {
+      display: grid; grid-template-columns: minmax(95px, 39%) minmax(0, 1fr);
+      gap: 6px; padding: 6px 9px; border-bottom: 1px solid var(--line);
+    }
+    .results dd { font-size: 13px; }
+    .calc { display: block; color: var(--muted); font-size: 12px; }
+    .table-wrap { overflow-x: auto; }
+    .med-list { margin: 3px 0 0; padding: 0; list-style: none; }
+    .med-list li + li { margin-top: 4px; }
+    .lab-table th, .lab-table td { font-variant-numeric: tabular-nums; }
+    .lab-table td, .lab-table thead th:not(:first-child) { text-align: right; }
+    table { width: 100%; min-width: 435px; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+    thead th { background: #eaf1f7; color: #23445e; font-size: 13px; white-space: nowrap; }
+    tbody th { font-weight: 700; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .history { display: grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 14px; }
+      .history > div + div { border-top: 0; }
+    }
+    @media (max-width: 540px) {
+      .shell, .top-inner { padding-inline: 12px; }
+      .note-header, .section { padding-inline: 13px; }
+      .history, .results { grid-template-columns: 1fr; }
+      .history > div + div { border-top: 1px solid var(--line); }
+      .timeline li { grid-template-columns: 1fr; gap: 2px; }
+    }
+    @page { size: A4; margin: 11mm; }
+    @media print {
+      * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      body { background: white; font-size: 10pt; }
+      .top-inner, .shell { padding-inline: 0; }
+      .top-inner { padding-inline: 10px; min-height: 33px; }
+      .shell { padding-block: 10px 0; }
+      .layout { display: block; }
+      aside.panel { margin-bottom: 9px; }
+      .history { display: grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 12px; }
+      .history > div + div { border-top: 0; }
+      .results { grid-template-columns: 1fr 1fr; }
+      .timeline li { grid-template-columns: 120px minmax(0, 1fr); gap: 8px; }
+      .patient { margin-bottom: 8px; }
+      .patient, .note-header, .section, .side-title { padding: 6px 10px; }
+      .section h2 { margin-bottom: 5px; }
+      .history > div, .timeline li, .results dl > div, th, td { padding-block: 4px; }
+      .section, .patient, aside.panel { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <span class="product">EMR</span>
+      <span class="context">입원 차트</span>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="patient" aria-label="환자 기본 정보">
+      <p class="patient-name"><span class="patient-label">환자명</span> 김동덕 <span class="badge">입원</span></p>
+      <dl class="patient-data">
+        <div><dt>성별 / 나이</dt><dd>남성 / 71세</dd></div>
+        <div><dt>키 / 체중</dt><dd>170 cm / 68 kg</dd></div>
+        <div><dt>입원일</dt><dd><time datetime="2026-10-30">2026.10.30</time></dd></div>
+      </dl>
+    </section>
+    <div class="layout">
+      <aside class="panel" aria-labelledby="history-title">
+        <h2 class="side-title" id="history-title">환자 요약</h2>
+        <dl class="history">
+          <div><dt>진단명 :</dt><dd>R/O hospital-acquired pneumonia (HAP)</dd></div>
+          <div><dt>과거력 :</dt><dd>기계판막 대동맥판막 치환술 병력(s/p mechanical AVR, 2018년). HTN, chronic HF, chronic renal impairment.</dd></div>
+          <div>
+            <dt>입원 전 복용약 :</dt>
+            <dd>
+              <ul class="med-list">
+                <li>Warfarin 3 mg PO daily, 18:00 (mechanical AVR 후 항응고요법)</li>
+                <li>Norvasc (amlodipine) 5 mg PO daily</li>
+                <li>Furosemide 40 mg PO daily</li>
+              </ul>
+            </dd>
+          </div>
+          <div>
+            <dt>건강보조제 복용력 :</dt>
+            <dd>Ginkgo biloba extract (은행잎 추출물). 환자 진술상 “피를 맑게 해준다”고 들어 약 3개월 전부터 자가 복용 중. 제품명 및 용량 미확인.</dd>
+          </div>
+        </dl>
+      </aside>
+      <article class="panel" aria-labelledby="note-title">
+        <header class="note-header">
+          <p id="note-title"><strong><time datetime="2026-11-05T10:00:00+09:00">2026.11.05 10:00</time></strong> · HD 7</p>
+        </header>
+        <section class="section" aria-labelledby="course-title">
+          <h2 id="course-title">입원 경과</h2>
+          <ol class="timeline">
+            <li>
+              <span class="timeline-label"><time datetime="2026-10-30">2026.10.30</time><br>입원 1일째(HD 1)</span>
+              <p>Dyspnea 및 bilateral lower extremity edema 악화로 입원. 입원 후 두 증상 모두 호전됨.</p>
+            </li>
+            <li>
+              <span class="timeline-label"><time datetime="2026-11-03T09:00:00+09:00">2026.11.03 09:00</time><br>입원 5일째(HD 5)</span>
+              <p>Fever (38.5℃) 및 productive cough with purulent sputum 발생. CXR상 new RLL infiltrate 확인되어 HAP 의심.</p>
+            </li>
+            <li>
+              <span class="timeline-label"><time datetime="2026-11-03T10:00:00+09:00">2026.11.03 10:00</time><br>경험적 항균요법 시작</span>
+              <p>Sputum 및 blood culture 검체 채취 후 empiric meropenem 및 vancomycin IV 시작.</p>
+            </li>
+            <li>
+              <span class="timeline-label"><time datetime="2026-11-05T10:00:00+09:00">2026.11.05 10:00</time><br>항균제 시작 약 48시간 후</span>
+              <p>Preliminary sputum culture에서 <strong>MRSA</strong> (methicillin-resistant <i>Staphylococcus aureus</i>) 검출. Final culture 및 antimicrobial susceptibility testing (AST) 결과 대기 중. Blood culture는 no growth to date (NGTD).</p>
+            </li>
+          </ol>
+        </section>
+        <section class="section" aria-labelledby="results-title">
+          <h2 id="results-title">현재 상태 및 신기능</h2>
+          <div class="results">
+            <div>
+              <h3>활력징후 및 신체진찰</h3>
+              <dl>
+                <div><dt>혈압(BP)</dt><dd>146/82 mmHg</dd></div>
+                <div><dt>맥박 / 호흡수</dt><dd>HR 94회/분 / RR 22회/분</dd></div>
+                <div><dt>체온(BT)</dt><dd>38.0℃</dd></div>
+                <div><dt>SpO₂</dt><dd>95% on O₂ 2 L/min via nasal cannula</dd></div>
+                <div><dt>Extremities</dt><dd>Mild bilateral lower extremity pitting edema</dd></div>
+              </dl>
+            </div>
+            <div>
+              <h3>신기능</h3>
+              <dl>
+                <div><dt>BUN</dt><dd>34 mg/dL</dd></div>
+                <div><dt>혈청 크레아티닌(SCr)</dt><dd>1.8 mg/dL</dd></div>
+                <div><dt>이전 신기능</dt><dd>최근 3개월 외래 creatinine 1.7–1.9 mg/dL</dd></div>
+                <div><dt>추정 CrCl</dt><dd><strong>약 36 mL/min</strong><span class="calc">Cockcroft–Gault 식, 제시 체중 68 kg 적용</span></dd></div>
+                <div><dt>Dialysis</dt><dd>미시행</dd></div>
+              </dl>
+            </div>
+          </div>
+        </section>
+        <section class="section" aria-labelledby="labs-title">
+          <h2 id="labs-title">검사 결과 추이</h2>
+          <div class="table-wrap">
+            <table class="lab-table" aria-labelledby="labs-title">
+              <thead>
+                <tr>
+                  <th scope="col">검사 항목</th>
+                  <th scope="col">10.30<br>입원 시</th>
+                  <th scope="col">11.03<br>항균제 시작 전</th>
+                  <th scope="col">11.05 06:00<br>당일 채혈</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">WBC (×10³/μL)</th><td>7.8</td><td>15.6</td><td>14.2</td></tr>
+                <tr><th scope="row">Neutrophils (%)</th><td>66</td><td>88</td><td>84</td></tr>
+                <tr><th scope="row">Hb (g/dL)</th><td>12.1</td><td>11.9</td><td>11.8</td></tr>
+                <tr><th scope="row">Platelets (×10³/μL)</th><td>218</td><td>210</td><td>205</td></tr>
+                <tr><th scope="row">CRP (mg/dL)</th><td>0.6</td><td>12.4</td><td>10.7</td></tr>
+                <tr><th scope="row">BUN (mg/dL)</th><td>32</td><td>33</td><td>34</td></tr>
+                <tr><th scope="row">SCr (mg/dL)</th><td>1.9</td><td>1.8</td><td>1.8</td></tr>
+                <tr><th scope="row">Na⁺ (mmol/L)</th><td>138</td><td>137</td><td>137</td></tr>
+                <tr><th scope="row">K⁺ (mmol/L)</th><td>4.1</td><td>3.8</td><td>3.7</td></tr>
+                <tr><th scope="row">PT (sec)</th><td>26.8</td><td>28.3</td><td>30.8</td></tr>
+                <tr><th scope="row">INR</th><td>2.42</td><td>2.56</td><td>2.78</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="missing">* 미제공 정보 · 최근 24시간 urine output 및 I/O, vancomycin level, drug allergies</p>
+        </section>
+        <section class="section" aria-labelledby="orders-title">
+          <h2 id="orders-title">현재 처방</h2>
+          <div class="table-wrap">
+            <table aria-labelledby="orders-title">
+              <thead>
+                <tr><th scope="col">처방 약물</th><th scope="col">1회 용량</th><th scope="col">투여 경로</th><th scope="col">투여 간격·방법</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Meropenem</th><td>1 g</td><td>정맥주입(IV)</td><td>q8h(8시간마다), 30분 주입</td></tr>
+                <tr><th scope="row">Vancomycin</th><td>1 g</td><td>정맥주입(IV)</td><td>5% 포도당액(D5W) 200 mL에 희석, q12h, 120분 주입</td></tr>
+                <tr><th scope="row">Warfarin</th><td>3 mg</td><td>경구(PO)</td><td>1일 1회, 18:00</td></tr>
+                <tr><th scope="row">Norvasc(amlodipine)</th><td>5 mg</td><td>경구(PO)</td><td>1일 1회</td></tr>
+                <tr><th scope="row">Furosemide</th><td>40 mg</td><td>경구(PO)</td><td>1일 1회</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="missing">* Maintenance IV fluid 처방 없음.</p>
+          <p class="flag">Meropenem 및 vancomycin 최초 처방 유지 중. 신기능에 따른 용량·투여 간격 조정 미시행.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
